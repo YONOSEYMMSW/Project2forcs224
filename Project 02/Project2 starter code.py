@@ -10,6 +10,174 @@
 
 ############################## PUT YOUR CLASSES, METHODS, ETC HERE ##############################
 
+class Node:
+    def __init__(self, key):
+        """
+        Initializes a new Node.
+        :param key: (int) The value of the node.
+        """
+        self.key = key        # Value of the node
+        self.left = None      # Pointer to the left child
+        self.right = None     # Pointer to the right child
+        self.p = None         # Pointer to the parent
+        self.size = 1         # Size of the subtree rooted at this node
+
+
+class BST:
+    def __init__(self):
+        """
+        Initializes an empty Binary Search Tree.
+        """
+        self.root = None  # The root of the BST
+
+    def insert(self, val):
+        """
+        Inserts a new node with the given value into the BST.
+        :param val: (int) The value to insert.
+        """
+        new_node = Node(val)
+        parent = None
+        current = self.root
+
+        # Traverse to find the correct spot
+        while current:
+            parent = current
+            current.size += 1  # Increment size for all ancestors
+            if val < current.key:
+                current = current.left
+            else:
+                current = current.right
+
+        # Attach the new node
+        new_node.p = parent
+        if parent is None:
+            self.root = new_node  # New node becomes root
+        elif val < parent.key:
+            parent.left = new_node
+        else:
+            parent.right = new_node
+
+    def remove(self, val):
+        """
+        Removes a node with the specified value from the BST.
+        :param val: (int) The value to remove.
+        """
+        node = self.search(val)
+        if node is None:
+            return  # Node not found
+
+        # Helper function to transplant nodes
+        def transplant(u, v):
+            if u.p is None:  # If u is the root
+                self.root = v
+            elif u == u.p.left:
+                u.p.left = v
+            else:
+                u.p.right = v
+            if v:
+                v.p = u.p
+
+        # Case 1: Node has no left child
+        if node.left is None:
+            transplant(node, node.right)
+        # Case 2: Node has no right child
+        elif node.right is None:
+            transplant(node, node.left)
+        # Case 3: Node has two children
+        else:
+            successor = self.find_min(node.right)
+            if successor.p != node:
+                transplant(successor, successor.right)
+                successor.right = node.right
+                successor.right.p = successor
+            transplant(node, successor)
+            successor.left = node.left
+            successor.left.p = successor
+
+        # Update size of ancestors
+        self.update_size_upward(node.p)
+
+    def search(self, target):
+        """
+        Searches for a node with the given key.
+        :param target: (int) The key to search for.
+        :return: (Node) The node containing the key, or None if not found.
+        """
+        current = self.root
+        while current and current.key != target:
+            if target < current.key:
+                current = current.left
+            else:
+                current = current.right
+        return current
+
+    def find_min(self, node):
+        """
+        Finds the node with the smallest key in the subtree rooted at the given node.
+        :param node: (Node) The root of the subtree.
+        :return: (Node) The node with the smallest key.
+        """
+        while node.left:
+            node = node.left
+        return node
+
+    def find_max(self, node):
+        """
+        Finds the node with the largest key in the subtree rooted at the given node.
+        :param node: (Node) The root of the subtree.
+        :return: (Node) The node with the largest key.
+        """
+        while node.right:
+            node = node.right
+        return node
+
+    def get_rank(self, target):
+        """
+        Finds the rank of the given key in sorted order.
+        :param target: (int) The key to find the rank for.
+        :return: (int) The rank of the key, or 0 if not found.
+        """
+        rank = 0
+        node = self.root
+        while node:
+            if target < node.key:
+                node = node.left
+            elif target > node.key:
+                rank += (1 + (node.left.size if node.left else 0))
+                node = node.right
+            else:
+                rank += (node.left.size if node.left else 0) + 1
+                return rank
+        return 0
+
+    def range_count(self, low, high):
+        """
+        Counts the number of nodes with keys in the range [low, high).
+        :param low: (int) The lower bound (inclusive).
+        :param high: (int) The upper bound (exclusive).
+        :return: (int) The number of keys in the range.
+        """
+        def helper(node):
+            if not node:
+                return 0
+            if node.key < low:
+                return helper(node.right)
+            elif node.key >= high:
+                return helper(node.left)
+            else:
+                return 1 + helper(node.left) + helper(node.right)
+
+        return helper(self.root)
+
+    def update_size_upward(self, node):
+        """
+        Updates the size of all ancestor nodes of the given node.
+        :param node: (Node) The node to start the update from.
+        """
+        while node:
+            node.size = 1 + (node.left.size if node.left else 0) + (node.right.size if node.right else 0)
+            node = node.p
+
 
 
 ########################################### MAIN ASSIGNMENT ###########################################
