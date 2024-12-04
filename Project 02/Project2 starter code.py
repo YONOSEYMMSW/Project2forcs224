@@ -130,6 +130,147 @@ class BST:
         while node.right:
             node = node.right
         return node
+    
+    def find_successor(self, node):
+        """
+        Finds the in-order successor of the given node.
+        :param node: (Node) The node to find the successor for.
+        :return: (Node) The successor node, or None if no successor exists.
+        :time complexity: O(h), where h is the height of the tree.
+        - Traverses the right subtree or moves up to ancestors.
+        """
+        if node.right:
+            # Successor is the minimum of the right subtree
+            return self.find_min(node.right)
+        # Move up to find the first ancestor where the node is in the left subtree
+        parent = node.p
+        while parent and node == parent.right:
+            node = parent
+            parent = parent.p
+        return parent
+    
+    def find_predecessor(self, node):
+        """
+        Finds the in-order predecessor of the given node.
+        :param node: (Node) The node to find the predecessor for.
+        :return: (Node) The predecessor node, or None if no predecessor exists.
+        :time complexity: O(h), where h is the height of the tree.
+        """
+        if node.left:
+            # Predecessor is the maximum of the left subtree
+            return self.find_max(node.left)
+        # Move up to find the first ancestor where the node is in the right subtree
+        parent = node.p
+        while parent and node == parent.left:
+            node = parent
+            parent = parent.p
+        return parent
+    
+    def transplant(self, node, replacement):
+        """
+        Replaces the subtree rooted at 'node' with the subtree rooted at 'replacement'.
+        :param node: (Node) The node to be replaced.
+        :param replacement: (Node) The node to replace 'node'.
+        :return: None
+        :time complexity: O(1), constant time.
+        """
+        if node.p is None:  # If node is the root
+            self.root = replacement
+        elif node == node.p.left:
+            node.p.left = replacement
+        else:
+            node.p.right = replacement
+        if replacement:
+            replacement.p = node.p
+
+    def traverse_inorder(self, node=None):
+        """
+        Performs an in-order traversal of the BST.
+        :param node: (Node) The root of the subtree to traverse. Defaults to tree root.
+        :return: (list) List of node keys in in-order sequence.
+        :time complexity: O(n), where n is the number of nodes in the tree.
+        """
+        if node is None:
+            node = self.root
+        result = []
+
+        def inorder_helper(node):
+            if node:
+                inorder_helper(node.left)
+                result.append(node.key)
+                inorder_helper(node.right)
+
+        inorder_helper(node)
+        return result
+    
+    def traverse_preorder(self, node=None):
+        """
+        Performs a pre-order traversal of the BST.
+        :param node: (Node) The root of the subtree to traverse. Defaults to tree root.
+        :return: (list) List of node keys in pre-order sequence.
+        :time complexity: O(n), where n is the number of nodes in the tree.
+        """
+        if node is None:
+            node = self.root
+        result = []
+
+        def preorder_helper(node):
+            if node:
+                result.append(node.key)
+                preorder_helper(node.left)
+                preorder_helper(node.right)
+
+        preorder_helper(node)
+        return result
+    
+    def traverse_postorder(self, node=None):
+        """
+        Performs a post-order traversal of the BST.
+        :param node: (Node) The root of the subtree to traverse. Defaults to tree root.
+        :return: (list) List of node keys in post-order sequence.
+        :time complexity: O(n), where n is the number of nodes in the tree.
+        """
+        if node is None:
+            node = self.root
+        result = []
+
+        def postorder_helper(node):
+            if node:
+                postorder_helper(node.left)
+                postorder_helper(node.right)
+                result.append(node.key)
+
+        postorder_helper(node)
+        return result
+    
+    def remove(self, val):
+        """
+        Removes a node with the specified key (val) from the BST.
+        :param val: (int) The key to remove.
+        :return: None
+        :time complexity: O(h), where h is the height of the tree.
+        """
+        node = self.search(val)
+        if node is None:
+            return  # Node not found
+
+        if node.left is None:
+            self.transplant(node, node.right)
+        elif node.right is None:
+            self.transplant(node, node.left)
+        else:
+            successor = self.find_min(node.right)
+            if successor.p != node:
+                self.transplant(successor, successor.right)
+                successor.right = node.right
+                successor.right.p = successor
+            self.transplant(node, successor)
+            successor.left = node.left
+            successor.left.p = successor
+
+        # Update sizes of ancestors
+        self.update_size_upward(node.p)
+
 
     def get_rank(self, target):
         """
@@ -171,12 +312,18 @@ class BST:
 
     def update_size_upward(self, node):
         """
-        Updates the size of all ancestor nodes of the given node.
-        :param node: (Node) The node to start the update from.
+        Updates the size attribute for the given node and its ancestors.
+        :param node: (Node) The node from which to start the update.
+        :return: None
+        :time complexity: O(h), where h is the height of the tree.
         """
         while node:
-            node.size = 1 + (node.left.size if node.left else 0) + (node.right.size if node.right else 0)
-            node = node.p
+            # Recalculate size as 1 (current node) + left subtree size + right subtree size
+            left_size = node.left.size if node.left else 0
+            right_size = node.right.size if node.right else 0
+            node.size = 1 + left_size + right_size
+            node = node.p  # Move up to the parent
+
 
 
 
